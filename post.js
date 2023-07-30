@@ -2,15 +2,12 @@ require('dotenv').config()
 const fs = require('node:fs');
 const Mastodon = require('mastodon');
 
-console.log(process.env)
-
 function post() {
 
 	const allDomains = fs.readFileSync('uniqueDomains.txt', { encoding: 'utf8' }).split('\n');
 	const uniqueDomains = Array.from(new Set(allDomains));
 
 	const rawdata = fs.readFileSync('imageData.txt', { encoding: 'utf8' }).split('\n')
-	console.log(rawdata);
 	const data = rawdata.filter(p => !!p).map(d => JSON.parse(d));
 
 	const stats = data.reduce((acc, cur) => {
@@ -30,7 +27,6 @@ function post() {
 	
 	const bar = `${new Array(hasIcons).fill(has).join('')}${new Array(hasNotIcons).fill(hasNot).join('')}`
 	const displayPct = Math.round(altTextPct * 100)
-	console.log({ altTextPct  });
 
 	const text = `
 Tracked ${stats.totalPosts} posts across ${uniqueDomains.length} instances over last hour.
