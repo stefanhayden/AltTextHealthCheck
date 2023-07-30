@@ -1,7 +1,8 @@
 
 ## Setup
 
-Copy the `.env.example` to `.env` and update the values for your mastodon bot account.
+Copy the `.env.example` to `.env` and update the values for your mastodon bot account. `LOCAL_TIMELINE` is `false` by default but set to `true` to only track posts on your instance.
+
 
 
 cronttab entries
