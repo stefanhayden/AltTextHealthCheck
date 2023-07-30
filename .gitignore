@@ -1,0 +1,5 @@
+node_modules
+imageData.txt 
+uniqueDomains.txt
+since_id.txt
+.env
