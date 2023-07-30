@@ -29,7 +29,7 @@ function post() {
 	const displayPct = Math.round(altTextPct * 100)
 
 	const text = `
-Tracked ${stats.totalPosts} posts across ${uniqueDomains.length} instances over last hour.
+Tracked ${stats.totalPosts} posts across ${uniqueDomains.length} instances.
 
 Found ${stats.totalDescriptions} descriptions set on ${stats.totalImages} images.
 
