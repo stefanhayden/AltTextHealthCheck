@@ -9,7 +9,7 @@ cronttab entries
 ```
 * * * * * cd /root/git/AltTextHealthCheck; /root/.nvm/versions/node/v19.5.0/bin/node readTimeline.js
 
-1 8-23/11 * * * cd /root/git/AltTextHealthCheck; /root/.nvm/versions/node/v19.5.0/bin/node clearDataFiles.js
+1 12,23 * * * cd /root/git/AltTextHealthCheck; /root/.nvm/versions/node/v19.5.0/bin/node clearDataFiles.js
 
-0 8-23/11 * * * cd /root/git/AltTextHealthCheck; PROD=1 /root/.nvm/versions/node/v19.5.0/bin/node post.js
+0 12,23 * * * cd /root/git/AltTextHealthCheck; PROD=1 /root/.nvm/versions/node/v19.5.0/bin/node post.js
 ```
