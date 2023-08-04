@@ -40,9 +40,9 @@ ${bar}
 
 
 	const m = new Mastodon({
-		access_token: 'BBAfZthfg9_q1B-KpDSfl2cDk7xyzOKyipzpfBLkykM',
+		access_token: process.env.ACCESS_TOKEN,
 		timeout_ms: 60*1000,  // optional HTTP request timeout to apply to all requests.
-		api_url: 'https://mastodon.social/api/v1/', // optional, defaults to https://mastodon.social/api/v1/
+		api_url: process.env.API_URL, // optional, defaults to https://mastodon.social/api/v1/
 	});
 
 	if (process.env.PROD)  {
