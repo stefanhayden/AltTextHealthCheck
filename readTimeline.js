@@ -25,11 +25,16 @@ function read() {
 		const totalImages = data.map(p => p.media_attachments).flat().length;
 		const totalDescriptions = data.map(p => p.media_attachments).flat().filter(p => p.description !== null).length;
 
+		const localPostsData = data.filter(p => !p.account.acct.includes('@'))
+		const localPosts = localPostsData.length;
+		const localImages = localPostsData.map(p => p.media_attachments).flat().length;
+		const localDescriptions = localPostsData.map(p => p.media_attachments).flat().filter(p => p.description !== null).length;
+
 		fs.writeFileSync('since_id.txt', data[0].id)
 
 		fs.appendFileSync('uniqueDomains.txt', uniqueDomains.join('\n'));
 
-		const saveData = { totalPosts, totalImages, totalDescriptions  }
+		const saveData = { totalPosts, totalImages, totalDescriptions, localPosts, localImages, localDescriptions }
 		fs.appendFileSync('imageData.txt', JSON.stringify(saveData) + '\n')
 
 	})
