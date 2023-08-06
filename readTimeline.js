@@ -15,7 +15,7 @@ function read() {
 	} catch (e) {} 
 
 
-	m.get('timelines/public', { local: process.env.LOCAL_TIMELINE, only_media: true, limit: 40,  ...extra }).then(resp => {
+	m.get('timelines/public', { only_media: true, limit: 40,  ...extra }).then(resp => {
 		const data = resp.data.filter(p => p.account.bot === false);
 
 		const accountDomains = data.map(p => p.account.acct.split('@')[1]).filter(p => !!p)

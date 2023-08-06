@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "dotenv": "^16.3.1",
-    "mastodon": "^1.2.2"
+    "mastodon": "^1.2.2",
+    "quickchart-js": "^3.1.3"
   }
 }
