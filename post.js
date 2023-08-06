@@ -41,7 +41,7 @@ Local: ${displayLocalPct}% - Found ${stats.localDescriptions} descriptions set o
 	const options = {
 		type: 'horizontalBar',
 		data: {
-			labels: ['Local', 'Federated'],
+			labels: ['Federated', 'Local'],
 			datasets: [
 				{
 					label: 'Has Alt text',
