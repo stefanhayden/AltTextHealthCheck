@@ -30,11 +30,11 @@ async function post() {
 	const displayLocalPct = Math.round(altTextLocalPct * 100);
 
 	const text = `
-Tracked ${stats.totalPosts} posts across ${uniqueDomains.length} instances.
+Tracked ${stats.totalPosts.toLocaleString()} posts across ${uniqueDomains.length.toLocaleString()} instances.
 
-Federated: ${displayPct}% -  Found ${stats.totalDescriptions} descriptions set on ${stats.totalImages} images.
+Federated: ${displayPct}% -  Found ${stats.totalDescriptions.toLocaleString()} descriptions set on ${stats.totalImages.toLocaleString()} images.
 
-Local: ${displayLocalPct}% - Found ${stats.localDescriptions} descriptions set on ${stats.localImages} images.
+Local: ${displayLocalPct}% - Found ${stats.localDescriptions.toLocaleString()} descriptions set on ${stats.localImages.toLocaleString()} images.
 	`;
 	console.log(text)
 
@@ -60,7 +60,7 @@ Local: ${displayLocalPct}% - Found ${stats.localDescriptions} descriptions set o
 		options: {
 			title: {
 				display: true,
-				text: 'Alt Text Health Check',
+				text: `Alt Text Health Check for ${process.env.API_URL.split('/')[2]}`,
 				fontStyle: 'bold',
 				fontSize: 20,
 				fontColor: '#fff',
