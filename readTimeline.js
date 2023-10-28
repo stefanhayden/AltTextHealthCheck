@@ -20,6 +20,10 @@ function read() {
 		// OG alt text posts
 		const data = resp.data.filter(p => p.account.bot === false);
 
+		if (!data.length) {
+			return;
+		}
+
 		const accountDomains = data.map(p => p.account.acct.split('@')[1]).filter(p => !!p)
 		const uniqueDomains = Array.from(new Set(accountDomains));
 
