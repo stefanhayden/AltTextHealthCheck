@@ -69,9 +69,9 @@ async function post() {
 	const show = 50;
 
 
-	const text = `Results from tracking ${allImages.toLocaleString()} images accross ${leaders.length.toLocaleString()} instances from the mastodon.social federated timeline. 
+	const text = `Results from tracking ${allImages.toLocaleString()} images across ${leaders.length.toLocaleString()} instances from the mastodon.social federated timeline. 
 
-Then filtering down to the top 1000 instances by active user from instances.social who hhad posted atleast ${Math.round(averageImages * 2)} images (2x the average).`;
+Then filtering down to the top 1000 instances by active user from instances.social who had posted at least ${Math.round(averageImages * 2)} images (2x the average).`;
 	console.log(text)
 
 	const altText = finalLeaders.slice(0, show).map(p => `${p.name} - ${p.pct}%`).join('\n');
