@@ -99,7 +99,7 @@ Then filtering down to the top 1000 instances by active user from instances.soci
 		options: {
 			title: {
 				display: true,
-				text: `Alt Text Leaderboard`,
+				text: `Top ${show} Alt Text Leaderboard`,
 				fontStyle: 'bold',
 				fontSize: 20,
 				fontColor: '#fff',
