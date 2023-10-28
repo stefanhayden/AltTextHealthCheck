@@ -2,5 +2,8 @@ node_modules
 imageData.txt 
 uniqueDomains.txt
 since_id.txt
+topServers.txt
+imageDataByDomains.txt
 .env
 tmp.png
+*.swp
