@@ -50,12 +50,10 @@ async function post() {
 	const topServers = JSON.parse(fs.readFileSync('topServers.txt', { encoding: 'utf8' }))
 
 	const medianLeader = leaders[Math.round(leaders.length / 2)];
-	const medianImages = data[medianLeader].images
 	const allImages = Object.keys(data).map((key) => data[key].images).reduce((a, b) =>  a + b, 0)
 	const averageImages = allImages /  leaders.length
 
 	console.log('leaders', leaders.length)
-	console.log('medianImages', medianImages)
 	console.log('averageImages', averageImages)
 	console.log('allImages', allImages)
 	const finalLeaders = 
