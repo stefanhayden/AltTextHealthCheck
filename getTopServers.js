@@ -7,7 +7,7 @@ const headers = {
 
 
 
-async function getPage({ count = 10000, sort_by = "active_users", sort_order = 'desc',  min_id } = {}) {
+async function getPage({ count = 1000, sort_by = "active_users", sort_order = 'desc',  min_id } = {}) {
 	const props = [
 		`count=${count}`,
 		`sort_by=${sort_by}`,
