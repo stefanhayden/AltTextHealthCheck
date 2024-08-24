@@ -14,7 +14,13 @@ async function post() {
 
 
 	const rawdata = fs.readFileSync('imageDataByDomains.txt', { encoding: 'utf8' }).split('\n')
-	const rawdataParsed = rawdata.filter(p => !!p).map(d => JSON.parse(d));
+	const rawdataParsed = rawdata.filter(p => !!p).map(d => {
+		try {
+			return JSON.parse(d)
+		} catch(e) {
+			return;
+		}
+	}).filter(p => !!p);
 
 	const data = rawdataParsed.reduce((acc, val) => {
 		const keys = Object.keys(val);
