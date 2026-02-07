@@ -66,7 +66,7 @@ async function post() {
 		leaders
 		.map(l => { data[l].name = l;   return data[l]})
 		.filter((p) => topServers.includes(p.name))
-		.filter((p) => p.images > (averageImages * 2))
+		.filter((p) => p.images > (averageImages * 1.5))
 	console.log(finalLeaders);
 	
 
@@ -75,7 +75,7 @@ async function post() {
 
 	const text = `Results from tracking ${allImages.toLocaleString()} images across ${leaders.length.toLocaleString()} instances from the mastodon.social federated timeline. 
 
-Then filtering down to the top 1000 instances by active user from instances.social who had posted at least ${Math.round(averageImages * 2)} images (2x the average).`;
+Then filtering down to the top 1000 instances by active user from instances.social who had posted at least ${Math.round(averageImages * 1.5)} images (1.5x the average).`;
 	console.log(text)
 
 	const altText = finalLeaders.slice(0, show).map(p => `${p.name} - ${p.pct}%`).join('\n');
