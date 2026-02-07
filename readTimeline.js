@@ -4,19 +4,22 @@ const fs = require('node:fs')
 
 function read() {
 	const m = new Mastodon({
-		access_token: process.env.ACCESS_TOKEN,
+		access_token: process.env.READ_ACCESS_TOKEN,
 		timeout_ms: 60*1000,  // optional HTTP request timeout to apply to all requests.
-		api_url: process.env.API_URL, // optional, defaults to https://mastodon.social/api/v1/
+		api_url: process.env.READ_API_URL, // optional, defaults to https://mastodon.social/api/v1/
 	});
 
 	let extra = {};
 	try {
 		extra.since_id = fs.readFileSync('since_id.txt', { encoding: 'utf8'  })
-	} catch (e) {} 
+	} catch (e) {
+		console.log('no since id')
+	} 
 
 
 	m.get('timelines/public', { only_media: true, limit: 40,  ...extra }).then(resp => {
 
+		console.log('public timeline', resp.data);
 		// OG alt text posts
 		const data = resp.data.filter(p => p.account.bot === false);
 

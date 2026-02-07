@@ -148,14 +148,14 @@ Then filtering down to the top 1000 instances by active user from instances.soci
 
 
 	const Mv1 = new Mastodon({
-		access_token: process.env.ACCESS_TOKEN,
+		access_token: process.env.WRITE_ACCESS_TOKEN,
 		timeout_ms: 60*1000,  // optional HTTP request timeout to apply to all requests.
-		api_url: process.env.API_URL, // optional, defaults to https://mastodon.social/api/v1/
+		api_url: process.env.WRITE_API_URL, // optional, defaults to https://mastodon.social/api/v1/
 	});
 	const Mv2 = new Mastodon({
-		access_token: process.env.ACCESS_TOKEN,
+		access_token: process.env.WRITE_ACCESS_TOKEN,
 		timeout_ms: 60*1000,  // optional HTTP request timeout to apply to all requests.
-		api_url: process.env.API_URL, // optional, defaults to https://mastodon.social/api/v1/
+		api_url: process.env.WRITE_API_URL, // optional, defaults to https://mastodon.social/api/v1/
 	});
 
 	await qc.toFile('./tmp.png');
