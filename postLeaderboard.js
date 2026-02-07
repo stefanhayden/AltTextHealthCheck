@@ -73,7 +73,7 @@ async function post() {
 	const show = 50;
 
 
-	const text = `Results from tracking ${allImages.toLocaleString()} images across ${leaders.length.toLocaleString()} instances from the mastodon.social federated timeline. 
+	const text = `Results from tracking ${allImages.toLocaleString()} images across ${leaders.length.toLocaleString()} instances from the mstdn.social federated timeline. 
 
 Then filtering down to the top 1000 instances by active user from instances.social who had posted at least ${Math.round(averageImages * 1.5)} images (1.5x the average).`;
 	console.log(text)
