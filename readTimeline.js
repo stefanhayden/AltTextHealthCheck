@@ -1,71 +1,63 @@
-require('dotenv').config()
-const Mastodon = require('mastodon');
 const fs = require('node:fs')
+const { mastodon, readDomain, run } = require('./lib');
 
-function read() {
-	const m = new Mastodon({
-		access_token: process.env.READ_ACCESS_TOKEN,
-		timeout_ms: 60*1000,  // optional HTTP request timeout to apply to all requests.
-		api_url: process.env.READ_API_URL, // optional, defaults to https://mastodon.social/api/v1/
-	});
+async function read() {
+	const m = mastodon(process.env.READ_API_URL, process.env.READ_ACCESS_TOKEN);
+	const localDomain = readDomain();
 
 	let extra = {};
 	try {
-		extra.since_id = fs.readFileSync('since_id.txt', { encoding: 'utf8'  })
+		extra.since_id = fs.readFileSync('since_id.txt', { encoding: 'utf8' }).trim()
 	} catch (e) {
 		console.log('no since id')
-	} 
+	}
 
+	const resp = await m.get('v1/timelines/public', { only_media: true, limit: 40, ...extra });
+	console.log('public timeline', resp.data);
 
-	m.get('timelines/public', { only_media: true, limit: 40,  ...extra }).then(resp => {
+	if (!resp.data.length) {
+		return;
+	}
 
-		console.log('public timeline', resp.data);
-		// OG alt text posts
-		const data = resp.data.filter(p => p.account.bot === false);
+	// OG alt text posts
+	const data = resp.data.filter(p => p.account.bot === false);
+	const domainOf = p => p.account.acct.split('@')[1] || localDomain;
+	const attachments = posts => posts.flatMap(p => p.media_attachments || []);
+	const described = media => media.filter(p => p.description !== null);
 
-		if (!data.length) {
-			return;
-		}
-
-		const accountDomains = data.map(p => p.account.acct.split('@')[1]).filter(p => !!p)
-		const uniqueDomains = Array.from(new Set(accountDomains));
+	if (data.length) {
+		const uniqueDomains = Array.from(new Set(data.map(domainOf)));
 
 		const totalPosts = data.length;
-		const totalImages = data.map(p => p.media_attachments).flat().length;
-		const totalDescriptions = data.map(p => p.media_attachments).flat().filter(p => p.description !== null).length;
+		const totalImages = attachments(data).length;
+		const totalDescriptions = described(attachments(data)).length;
 
 		const localPostsData = data.filter(p => !p.account.acct.includes('@'))
 		const localPosts = localPostsData.length;
-		const localImages = localPostsData.map(p => p.media_attachments).flat().length;
-		const localDescriptions = localPostsData.map(p => p.media_attachments).flat().filter(p => p.description !== null).length;
+		const localImages = attachments(localPostsData).length;
+		const localDescriptions = described(attachments(localPostsData)).length;
 
-		fs.writeFileSync('since_id.txt', data[0].id)
-
-		fs.appendFileSync('uniqueDomains.txt', uniqueDomains.join('\n'));
+		fs.appendFileSync('uniqueDomains.txt', uniqueDomains.join('\n') + '\n');
 
 		const saveData = { totalPosts, totalImages, totalDescriptions, localPosts, localImages, localDescriptions }
 		fs.appendFileSync('imageData.txt', JSON.stringify(saveData) + '\n')
 
-
 		// New tracking by domain for leaderboards
-		const domainMap = resp.data.reduce((acc, val) => {
-			if (val.account.bot) {
-				return acc;
-			}
-			const domain = val.account.acct.split('@')[1] || 'mastodon.social';
+		const domainMap = data.reduce((acc, val) => {
+			const domain = domainOf(val);
 			if (!acc[domain]) {
 				acc[domain] = { images: 0, descriptions: 0 };
 			}
-			acc[domain].images += (val.media_attachments || []).length
-			acc[domain].descriptions += (val.media_attachments || []).filter(p => p.description !== null).length
+			acc[domain].images += attachments([val]).length
+			acc[domain].descriptions += described(attachments([val])).length
 
 			return acc;
 		}, {});
 		fs.appendFileSync('imageDataByDomains.txt', JSON.stringify(domainMap) + '\n')
+	}
 
-
-	})
-
+	// Use the newest status overall, not the newest non-bot one, so nothing is fetched twice
+	fs.writeFileSync('since_id.txt', resp.data[0].id)
 }
 
-read();
+run(read);

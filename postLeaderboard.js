@@ -1,19 +1,19 @@
-require('dotenv').config()
 const fs = require('node:fs');
-const Mastodon = require('mastodon');
-const QuickChart = require('quickchart-js');
+const { getTopServers } = require('./getTopServers');
+const { MAX_DESCRIPTION_LENGTH, postWithImage, readDomain, stackedBarChart, logShortUrl, pct, run } = require('./lib');
 
+const DATA_FILE = 'imageDataByDomains.txt';
 
-function clearFiles() {
-
-	fs.writeFileSync('imageDataByDomains.txt', '');
+// Remove only the bytes we read; readTimeline.js may have appended more while we were posting
+function clearConsumed(bytesRead) {
+	const current = fs.readFileSync(DATA_FILE);
+	fs.writeFileSync(DATA_FILE, current.subarray(bytesRead));
 }
-
 
 async function post() {
 
-
-	const rawdata = fs.readFileSync('imageDataByDomains.txt', { encoding: 'utf8' }).split('\n')
+	const rawBuffer = fs.readFileSync(DATA_FILE);
+	const rawdata = rawBuffer.toString('utf8').split('\n')
 	const rawdataParsed = rawdata.filter(p => !!p).map(d => {
 		try {
 			return JSON.parse(d)
@@ -35,144 +35,66 @@ async function post() {
 		return acc;
 	}, {})
 
-
-
 	Object.keys(data).forEach((key) => {
-		data[key].pct = Math.round((data[key].descriptions / data[key].images) * 100) 
+		data[key].name = key;
+		data[key].ratio = data[key].images ? data[key].descriptions / data[key].images : 0;
+		data[key].pct = pct(data[key].descriptions, data[key].images);
 	})
-	
 
-	const leaders = Object.keys(data);
-	leaders.sort((a, b) => {
-		if (data[a].pct > data[b].pct) {
-			return -1
-		}
-		if (data[a].pct < data[b].pct) {
-			return 1
-		}
-		return 0
-	});
+	// Sort on the exact ratio, then by volume, so ties are ordered consistently
+	const leaders = Object.values(data).sort((a, b) => (b.ratio - a.ratio) || (b.images - a.images));
 
+	// Fresh installs won't have the list until the twice-monthly cron runs
+	if (!fs.existsSync('topServers.txt')) {
+		await getTopServers();
+	}
 	const topServers = JSON.parse(fs.readFileSync('topServers.txt', { encoding: 'utf8' }))
 
-	const medianLeader = leaders[Math.round(leaders.length / 2)];
-	const allImages = Object.keys(data).map((key) => data[key].images).reduce((a, b) =>  a + b, 0)
-	const averageImages = allImages /  leaders.length
+	const allImages = leaders.map((p) => p.images).reduce((a, b) => a + b, 0)
+	const averageImages = allImages / leaders.length
 
 	console.log('leaders', leaders.length)
 	console.log('averageImages', averageImages)
 	console.log('allImages', allImages)
-	const finalLeaders = 
-		leaders
-		.map(l => { data[l].name = l;   return data[l]})
+	const finalLeaders = leaders
 		.filter((p) => topServers.includes(p.name))
 		.filter((p) => p.images > (averageImages * 1.5))
 	console.log(finalLeaders);
-	
+
+	if (!finalLeaders.length) {
+		console.log('no instances qualified, skipping post');
+		return;
+	}
 
 	const show = 50;
+	const shown = finalLeaders.slice(0, show);
 
-
-	const text = `Results from tracking ${allImages.toLocaleString()} images across ${leaders.length.toLocaleString()} instances from the mstdn.social federated timeline. 
+	const text = `Results from tracking ${allImages.toLocaleString()} images across ${leaders.length.toLocaleString()} instances from the ${readDomain()} federated timeline.
 
 Then filtering down to the top 1000 instances by active user from instances.social who had posted at least ${Math.round(averageImages * 1.5)} images (1.5x the average).`;
 	console.log(text)
 
-	const altText = finalLeaders.slice(0, show).map(p => `${p.name} - ${p.pct}%`).join('\n');
+	// Drop whole lines rather than cutting one off mid-name if the list is over the limit
+	let altText = '';
+	for (const p of shown) {
+		const line = `${p.name} - ${p.pct}%`;
+		if (altText.length + line.length + 1 > MAX_DESCRIPTION_LENGTH) break;
+		altText += (altText ? '\n' : '') + line;
+	}
 
-
-	const options = {
-		type: 'horizontalBar',
-		data: {
-			labels: finalLeaders.slice(0, show).map(p => `${p.name} ${p.pct}%`),
-			datasets: [
-				{
-					label: 'Has Alt text',
-					backgroundColor: '#5e72e4',
-					data: finalLeaders.slice(0, show).map(p => p.pct), 
-					barPercentage: .9,
-				},
-				{
-					label: 'No Alt Text',
-					backgroundColor: 'rgba(0,0,0, .5)',
-					data: finalLeaders.slice(0, show).map(p => 100 - p.pct),
-					barPercentage: .9,
-				},
-			],
-		},
-		options: {
-			title: {
-				display: true,
-				text: `Top ${show} Alt Text Leaderboard`,
-				fontStyle: 'bold',
-				fontSize: 20,
-				fontColor: '#fff',
-			},
-			legend: {
-				labels: {
-					fontSize: 13,
-					fontStyle: 'bold',
-					fontColor: '#fff',
-				}
-			},
-			scales: {
-				xAxes: [
-					{
-						gridLines: {
-							display: false
-						},
-						stacked: true,
-						ticks: {
-							fontColor: '#fff',
-						},
-					},
-				],
-				yAxes: [
-					{
-						gridLines: {
-							display: false
-						},
-						stacked: true,
-						ticks: {
-							fontColor: '#fff',
-						},
-					},
-				],
-			},
-		},
-	};
-        const qc = new QuickChart();
-	qc.setHeight(900).setWidth(600).setBackgroundColor('#111c44').setConfig(options)
-	
-	qc.getShortUrl().then((a) => console.log(a));
-
-
-	const Mv1 = new Mastodon({
-		access_token: process.env.WRITE_ACCESS_TOKEN,
-		timeout_ms: 60*1000,  // optional HTTP request timeout to apply to all requests.
-		api_url: process.env.WRITE_API_URL, // optional, defaults to https://mastodon.social/api/v1/
+	const qc = stackedBarChart({
+		title: `Top ${show} Alt Text Leaderboard`,
+		labels: shown.map(p => `${p.name} ${p.pct}%`),
+		pcts: shown.map(p => p.pct),
+		width: 600,
+		height: 900,
 	});
-	const Mv2 = new Mastodon({
-		access_token: process.env.WRITE_ACCESS_TOKEN,
-		timeout_ms: 60*1000,  // optional HTTP request timeout to apply to all requests.
-		api_url: process.env.WRITE_API_URL, // optional, defaults to https://mastodon.social/api/v1/
-	});
+	await logShortUrl(qc);
 
-	await qc.toFile('./tmp.png');
-
-
-	if (process.env.PROD)  {
-		Mv2.post('media', {  file: require('fs').createReadStream('tmp.png'), description: altText }).then(resp => {
-			const id = resp.data.id;
-			Mv1.post('statuses', {  status: text, media_ids: [id] })
-		})
-		clearFiles();
+	if (process.env.PROD) {
+		await postWithImage({ status: text, image: await qc.toBinary(), description: altText });
+		clearConsumed(rawBuffer.length);
 	}
 }
 
-
-
-post();
-
-
-
+run(post);
