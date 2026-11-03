@@ -39,6 +39,8 @@ async function post() {
 		data[key].name = key;
 		data[key].ratio = data[key].images ? data[key].descriptions / data[key].images : 0;
 		data[key].pct = pct(data[key].descriptions, data[key].images);
+		// Only a true zero reads as 0%; an instance with a little alt text shows <1% instead
+		data[key].pctLabel = (data[key].pct === 0 && data[key].descriptions > 0) ? '<1%' : `${data[key].pct}%`;
 	})
 
 	// Sort on the exact ratio, then by volume, so ties are ordered consistently
@@ -56,35 +58,44 @@ async function post() {
 	console.log('leaders', leaders.length)
 	console.log('averageImages', averageImages)
 	console.log('allImages', allImages)
-	const finalLeaders = leaders
-		.filter((p) => topServers.includes(p.name))
-		.filter((p) => p.images > (averageImages * 1.5))
-	console.log(finalLeaders);
+	const show = 50;
+	const topLeaders = leaders.filter((p) => topServers.includes(p.name));
 
-	if (!finalLeaders.length) {
+	// Lowering the bar only adds instances, and 0% instances sort last, so the chart is free of them
+	// once at least `show` instances with some alt text qualify. Use the highest bar (1.5x down to
+	// 0.5x the average) where that holds; failing that, the highest that fills the chart; failing
+	// that (very little data), the lowest bar, which shows the most instances
+	const multipliers = [];
+	for (let tenths = 15; tenths >= 5; tenths--) multipliers.push(tenths / 10);
+	const qualifying = (m) => topLeaders.filter((p) => p.images > averageImages * m);
+	const multiplier = multipliers.find((m) => qualifying(m).filter((p) => p.descriptions > 0).length >= show)
+		?? multipliers.find((m) => qualifying(m).length >= show)
+		?? multipliers[multipliers.length - 1];
+	const shown = qualifying(multiplier).slice(0, show);
+	console.log('multiplier', multiplier);
+	console.log(shown);
+
+	if (!shown.length) {
 		console.log('no instances qualified, skipping post');
 		return;
 	}
 
-	const show = 50;
-	const shown = finalLeaders.slice(0, show);
-
 	const text = `Results from tracking ${allImages.toLocaleString()} images across ${leaders.length.toLocaleString()} instances from the ${readDomain()} federated timeline.
 
-Then filtering down to the top 1000 instances by active user from instances.social who had posted at least ${Math.round(averageImages * 1.5)} images (1.5x the average).`;
+Then filtering down to the top 1000 instances by active user from instances.social who had posted at least ${Math.floor(averageImages * multiplier) + 1} images (${multiplier.toFixed(1)}x the average).`;
 	console.log(text)
 
 	// Drop whole lines rather than cutting one off mid-name if the list is over the limit
 	let altText = '';
 	for (const p of shown) {
-		const line = `${p.name} - ${p.pct}%`;
+		const line = `${p.name} - ${p.pctLabel}`;
 		if (altText.length + line.length + 1 > MAX_DESCRIPTION_LENGTH) break;
 		altText += (altText ? '\n' : '') + line;
 	}
 
 	const qc = stackedBarChart({
-		title: `Top ${show} Alt Text Leaderboard`,
-		labels: shown.map(p => `${p.name} ${p.pct}%`),
+		title: `Top ${shown.length} Alt Text Leaderboard`,
+		labels: shown.map(p => `${p.name} ${p.pctLabel}`),
 		pcts: shown.map(p => p.pct),
 		width: 600,
 		height: 900,
